@@ -42,6 +42,39 @@ py -m expense_approver --backend csv --input F --policy policy.json
 py -m expense_approver --backend sqlite --db F --policy policy.json
 ```
 
+**Healthy test output** (the target to validate against — a run is only
+"green" when it ends like this):
+
+```
+----------------------------------------------------------------------
+Ran 40 tests in 0.10s
+
+OK
+```
+
+Anything other than a trailing `OK` (a `FAILED (...)`, an error, or a
+different test count without a matching spec/matrix change) means the
+change is not done.
+
+## Testing / Stage 4 (Test)
+
+Verification is continuous, not a final gate: run the single test command
+above after every change and iterate until the healthy output appears
+**before** surfacing code for human review. Concrete pass/fail targets live
+in the spec's §11 test matrix and §9 decision table; `test_spec_11_matrix`
+enforces them.
+
+- **`tests/**` is read-only during fixes.** A `PreToolUse` hook
+  (`.claude/hooks/protect_tests.py`, wired in `.claude/settings.json`) blocks
+  the agent from editing test files while fixing a bug — fix the code to pass
+  the test, never the reverse.
+- **Re-run evals whenever configuration changes.** Editing `policy.json`,
+  this `CLAUDE.md`, `spec.md`, or the hooks/settings is a config change: run
+  the full suite again, and for policy/spec changes also update the affected
+  §11 matrix row and its `tests/test_engine.py` test in the same step.
+- **Production incidents become permanent test cases** — reproduce any
+  escaped defect as a failing test first, then fix, so it can't recur.
+
 ## When changing policy behavior
 
 Bump `policy_version` in `policy.json` so historical decisions stay explainable
