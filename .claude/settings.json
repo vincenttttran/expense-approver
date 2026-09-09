@@ -9,6 +9,15 @@
             "command": "py \"$CLAUDE_PROJECT_DIR/.claude/hooks/protect_tests.py\""
           }
         ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "py \"$CLAUDE_PROJECT_DIR/.claude/hooks/deploy_gate.py\""
+          }
+        ]
       }
     ]
   }
