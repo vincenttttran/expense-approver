@@ -1,0 +1,4 @@
+id,employee,category,amount,receipt,submitted_at
+E-1001,alice@co,meals,42.00,yes,2026-09-01
+E-1002,bob@co,software,120.00,yes,2026-09-02
+E-1003,carol@co,travel,60.00,no,2026-09-03

@@ -1,0 +1,12 @@
+{
+  "policy_version": "v1",
+  "hard_cap": 75.00,
+  "default_threshold": 25.00,
+  "reject_thresholds_above_hard_cap": true,
+  "category_thresholds": {
+    "meals": 50.00,
+    "travel": 75.00,
+    "office": 50.00,
+    "software": 75.00
+  }
+}

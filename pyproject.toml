@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "expense-approver"
+version = "1.0.0"
+description = "Batch tool that auto-approves or flags submitted expense reports (spec.md v1)."
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [{ name = "Vincent Tran" }]
+# Runtime uses only the Python standard library (csv, sqlite3, decimal, json, argparse).
+dependencies = []
+
+[project.scripts]
+expense-approver = "expense_approver.cli:main"
+
+[tool.setuptools]
+packages = ["expense_approver"]
+
+# Tests use the stdlib unittest runner (no third-party test dependency):
+#   py -m unittest discover -s tests -v
