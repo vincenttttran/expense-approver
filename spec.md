@@ -1,7 +1,7 @@
 # Spec: Expense-Report Approval Tool
 
 **Author:** Vincent Tran (spec derived from `intent.md`)
-**Status:** Draft, ready for implementation review
+**Status:** Reviewed — open questions resolved, ready to hand to build
 **Source intent:** [intent.md](intent.md)
 
 ---
@@ -206,8 +206,12 @@ wins in this spec**, so the effective ceiling for auto-approval is
   can never permit auto-approval above $75.
 - **Recommendation:** either (a) treat $75 as a documented global ceiling and
   reject/warn on any configured threshold above it, or (b) reinterpret the $75
-  rule as the *default* threshold for categories without their own. This spec
-  assumes (a). **Needs owner confirmation.**
+  rule as the *default* threshold for categories without their own.
+- **✅ Decided (Q4 → option A):** the config loader **rejects** any category
+  threshold above the hard cap at load time (`reject_thresholds_above_hard_cap:
+  true`). $75 stays an ironclad global ceiling and the intent's "over $75 always
+  goes to review" guarantee is preserved. Option (b) was rejected because it
+  would let a high per-category threshold escape the $75 review rule.
 
 ### 5.2 Boundary semantics at the threshold and at $75 ⚠️
 
@@ -221,8 +225,12 @@ exclusive wordings, but they leave the exact-boundary cases undefined:
   cap. This spec uses `> 75.00`, meaning exactly $75.00 can still auto-approve if
   it also clears its category threshold and has a receipt.
 - These two choices are **deliberately inconsistent** (threshold is inclusive-flag,
-  cap is exclusive-flag) because they mirror the intent's exact wording. If the
-  owner wants consistency, pick one convention. **Needs owner confirmation.**
+  cap is exclusive-flag) because they mirror the intent's exact wording.
+- **✅ Decided (Q5 → option A):** keep the asymmetric convention that mirrors the
+  intent's wording — flag the threshold on `amount >= threshold`, flag the cap on
+  `amount > 75.00`. Exactly $75.00 may still auto-approve if it clears its
+  category threshold and has a receipt; an amount equal to the category threshold
+  is flagged.
 
 ### 5.3 Single vs. multiple reasons
 
@@ -303,7 +311,7 @@ category threshold above the hard cap rather than accepting a dead value.
 ### 8.2 Zero and negative amounts
 - `amount == 0`: passes the hard cap and is auto-approvable if receipt + threshold
   clear. **Decision:** flag zero-amount records with `INVALID_RECORD` — a $0
-  expense is almost certainly a data error worth a human glance. *Confirm.*
+  expense is almost certainly a data error worth a human glance. (Q7 confirmed.)
 - `amount < 0`: treated as `INVALID_RECORD` → FLAGGED. Negative/refund handling is
   out of scope for v1; never auto-approved.
 
@@ -334,19 +342,21 @@ category threshold above the hard cap rather than accepting a dead value.
 
 ---
 
-## 9. Open Questions / Decisions Needed
+## 9. Open Questions / Decisions — Resolved
 
-Answered here with a recommended default; each still wants owner sign-off.
+All questions below were reviewed by the product owner (2026-09-09) and are now
+**decided**. Each ruling is the standing decision the implementation follows;
+nothing in this section is left open.
 
-| # | Question (from intent + analysis) | This spec's default | Needs confirmation |
-|---|-----------------------------------|---------------------|--------------------|
-| Q1 | Are category thresholds configurable or fixed? | **Configurable** via `policy.json`. | Owner preference. |
-| Q2 | Do we need an audit log of *who approved what*, or is status enough? | Status + `decided_at` + `policy_version` on each record (a lightweight audit trail); **no separate approver identity** in v1 because auto-approval has no human approver and manager sign-off is out of scope. | Confirm whether manager actions on flagged items must be recorded later. |
-| Q3 | How are unknown categories handled? | Default threshold ($25) **plus** `UNKNOWN_CATEGORY` note; fail toward review. | Confirm default value and whether unknown category should hard-flag. |
-| Q4 | Should thresholds above the $75 hard cap be allowed? ([§5.1](#51-hard-cap-silently-overrides-high-category-thresholds-)) | **Rejected at config load** (`reject_thresholds_above_hard_cap: true`). | Confirm, or choose the "$75 as default threshold" reinterpretation. |
-| Q5 | Boundary convention at threshold and at $75 ([§5.2](#52-boundary-semantics-at-the-threshold-and-at-75-)) | Threshold flag on `>=`; hard cap flag on `>`. | Confirm, or unify. |
-| Q6 | Multiple reasons per flag? ([§5.3](#53-single-vs-multiple-reasons)) | Single short-circuited reason (+ optional `UNKNOWN_CATEGORY`). | Confirm. |
-| Q7 | Zero-amount handling ([§8.2](#82-zero-and-negative-amounts)) | Flag as `INVALID_RECORD`. | Confirm. |
+| # | Question (from intent + analysis) | Ruling | Decision |
+|---|-----------------------------------|--------|----------|
+| Q1 | Are category thresholds configurable or fixed? | **Configurable** via `policy.json`. | ✅ Confirmed |
+| Q2 | Do we need an audit log of *who approved what*, or is status enough? | Status + `decided_at` + `policy_version` on each record is the v1 audit trail; **no separate approver identity** (auto-approval has no human approver; manager sign-off is out of scope for v1). | ✅ Confirmed |
+| Q3 | How are unknown categories handled? | Default threshold ($25) **plus** `UNKNOWN_CATEGORY` note; fail toward review. | ✅ Confirmed |
+| Q4 | Should thresholds above the $75 hard cap be allowed? ([§5.1](#51-hard-cap-silently-overrides-high-category-thresholds-)) | **No** — config loader rejects any category threshold above the hard cap (`reject_thresholds_above_hard_cap: true`). $75 stays a global ceiling; the "over $75 always reviewed" guarantee is preserved. | ✅ Decided → option A |
+| Q5 | Boundary convention at threshold and at $75 ([§5.2](#52-boundary-semantics-at-the-threshold-and-at-75-)) | Keep the intent's wording: flag threshold on `>=`, flag hard cap on `>`. Exactly $75.00 may auto-approve; amount == threshold is flagged. | ✅ Decided → option A |
+| Q6 | Multiple reasons per flag? ([§5.3](#53-single-vs-multiple-reasons)) | Single short-circuited reason (+ optional `UNKNOWN_CATEGORY`). | ✅ Confirmed |
+| Q7 | Zero-amount handling ([§8.2](#82-zero-and-negative-amounts)) | Flag as `INVALID_RECORD`. | ✅ Confirmed |
 
 ---
 
